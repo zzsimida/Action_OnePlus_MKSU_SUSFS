@@ -228,6 +228,9 @@ jobs:
           echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
           echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
 
+          # 禁用 SUSFS（builtin 分支 Kconfig 里 KSU_SUSFS default y，必须显式关掉）
+          echo "# CONFIG_KSU_SUSFS is not set" >> "$CONFIG_FILE"
+
           # Remove check_defconfig
           sed -i 's/check_defconfig//' ./common/build.config.gki
 
