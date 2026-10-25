@@ -185,6 +185,11 @@ jobs:
         run: |
           cd kernel_workspace/kernel_platform
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s builtin
+
+          # 修复 builtin 分支非 SUSFS 路径的编译错误（Linux 6.6 下 user_arg_ptr 是值类型）：
+          # USER_ARG_NULL 宏返回的是指针 user_arg_null_ptr()，而 ksu_sulog_capture 的 argv 参数是值类型，需解引用
+          sed -i 's/#define USER_ARG_NULL user_arg_null_ptr()/#define USER_ARG_NULL (*user_arg_null_ptr())/' ./KernelSU/kernel/sulog/event.c
+
           cd ./KernelSU
           KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10606)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
