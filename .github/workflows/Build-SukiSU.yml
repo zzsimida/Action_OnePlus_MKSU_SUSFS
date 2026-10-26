@@ -120,7 +120,7 @@ jobs:
         with:
           root-reserve-mb: 8192
           temp-reserve-mb: 2048
-          swap-size-mb: 8192
+          swap-size-mb: 16384
           remove-dotnet: 'true'
           remove-android: 'true'
           remove-haskell: 'true'
@@ -135,6 +135,12 @@ jobs:
         run: |
           sudo apt update && sudo apt upgrade -y
           sudo apt install -y python3 git curl
+
+      - name: Limit build parallelism (防 OOM)
+        run: |
+          # 降低 bazel/内核 make 并发度，压低瞬时内存峰值（15G RAM + 16G swap 仍可能被 LTO 链接顶爆）
+          echo "build --jobs=2 --local_ram_resources=6144" > ~/.bazelrc
+          cat ~/.bazelrc
 
       - name: Show selected inputs debug
         run: |
