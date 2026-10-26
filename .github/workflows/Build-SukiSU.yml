@@ -184,11 +184,16 @@ jobs:
       - name: Add KernelSU-SukiSU Ultra
         run: |
           cd kernel_workspace/kernel_platform
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s builtin
+          # 固定 SukiSU-Ultra 到已验证的 commit，避免上游 builtin 分支继续变动导致构建不可复现
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s 6397fcb5d96e8f4953c71e02c73f8c6800541bff
 
           # 修复 builtin 分支非 SUSFS 路径的编译错误（Linux 6.6 下 user_arg_ptr 是值类型）：
           # USER_ARG_NULL 宏返回的是指针 user_arg_null_ptr()，而 ksu_sulog_capture 的 argv 参数是值类型，需解引用
           sed -i 's/#define USER_ARG_NULL user_arg_null_ptr()/#define USER_ARG_NULL (*user_arg_null_ptr())/' ./KernelSU/kernel/sulog/event.c
+
+          # 修复 builtin 分支非 SUSFS 路径的编译错误：pkg_observer.c 里 susfs_parse_priority_app_strings() 调用未加保护，
+          # 我们用 "# CONFIG_KSU_SUSFS is not set" 禁用了 SUSFS，该函数未被声明，需用 #ifdef 包起来
+          sed -i 's/^\(\s*\)susfs_parse_priority_app_strings();/\1#ifdef CONFIG_KSU_SUSFS\n\1susfs_parse_priority_app_strings();\n\1#endif/' ./KernelSU/kernel/manager/pkg_observer.c
 
           cd ./KernelSU
           KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10606)
