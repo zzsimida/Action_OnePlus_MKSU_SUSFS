@@ -312,7 +312,9 @@ jobs:
         if: ${{ github.event.inputs.CPU != 'sm8650' && github.event.inputs.CPU != 'sm7675' }}
         run: |
          cd kernel_workspace
-         LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} ${{ github.event.inputs.BUILD_METHOD }}
+         # LTO=none：关掉 ThinLTO 链接。sm8750 的 LTO 链接单进程会把 15G RAM + 16G swap 顶爆（build #6/#8 的 OOM 死因），
+         # 关掉后走普通 ld 链接，内存大幅下降；prepare_vendor.sh 内部会把 LTO 环境变量转成 --lto=none（其 sanitizer 分支用的就是这个值）
+         LTO=none SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} ${{ github.event.inputs.BUILD_METHOD }}
 
       - name: Make AnyKernel3
         run: |
